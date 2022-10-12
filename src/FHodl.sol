@@ -10,6 +10,7 @@ contract FHodl is ERC20, Ownable{
     uint256 maxSupply = 21000000 ether;
 
     constructor(uint _supply) ERC20("FHODL", "Forced Hodl") {
+        require(_supply <= maxSupply);
         _mint(msg.sender, _supply);
     }
 

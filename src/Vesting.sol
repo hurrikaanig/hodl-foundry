@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IFHodl.sol";
 
-contract VestingForcedHodl is Ownable{
+contract Vesting is Ownable{
 
     struct UserInfo {
         uint256 stakedAmount;
@@ -18,28 +18,24 @@ contract VestingForcedHodl is Ownable{
     uint256 constant private ONE_YEAR = 365 days;
     uint256 constant private ONE_MONTH = 30 days;
     
-    uint256[] vestingDurations = [
+    uint256[] public vestingDurations = [
         1 weeks,
         ONE_MONTH,
-        3 * ONE_MONTH,
         6 * ONE_MONTH,
         ONE_YEAR,
-        4 * ONE_YEAR
+        2 * ONE_YEAR
     ];
-    uint256[] tokenRatio = [
-        10,
-        13,
-        20,
-        44,
-        209,
+    uint256[] public tokenRatio = [
+        1,
+        6,
+        50,
+        238,
         1000
     ];
     uint256 public totalStakedTokens;
     uint256 TotalToCollect = 1000 ether;
-
-    mapping(address => UserInfo) public stakers;
-
     IFHodl public token;
+    mapping(address => UserInfo) public stakers;
 
     constructor(IFHodl _token) {
         token = _token;
@@ -49,6 +45,10 @@ contract VestingForcedHodl is Ownable{
     // Vesting
     //
 
+    function getStaker(address _user) external view returns (UserInfo memory) {
+        return stakers[_user];
+    }
+
     function vest(uint256 _amount, uint8 _durationIndex) public {
         if ( stakers[msg.sender].stakedAmount > 0) {
             require(_durationIndex >= stakers[msg.sender].vestingDurationIndex);
@@ -56,7 +56,7 @@ contract VestingForcedHodl is Ownable{
         token.transferFrom(msg.sender, address(this), _amount);
         stakers[msg.sender].stakedAmount += _amount;
         stakers[msg.sender].lastStakeTimestamp = block.timestamp;
-        stakers[msg.sender].vestingDurationIndex = _durationIndex;
+        stakers[msg.sender].unlockTimestamp = block.timestamp + vestingDurations[_durationIndex];
         totalStakedTokens += _amount;
     }
 

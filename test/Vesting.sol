@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../src/FHodl.sol";
 import "../src/Vesting.sol";
 import "../src/interfaces/IFHodl.sol";
@@ -14,11 +15,11 @@ contract VestingTest is Test {
 
     function setUp() public {
         fhodl = new FHodl(1000 ether);
-        vesting = new Vesting(IFHodl(address(fhodl)));
+        vesting = new Vesting(IERC20(address(fhodl)));
     }
 
     function testVest() public {
-        fhodl.mint(10, user);
+        fhodl.mint(user, 10);
 
         vm.startPrank(user);
         fhodl.approve(address(vesting), 10);
@@ -26,11 +27,29 @@ contract VestingTest is Test {
         vesting.vest(10, 1);
         vm.stopPrank();
         Vesting.UserInfo memory userInfo = vesting.getStaker(user);
-        assertEq(userInfo.stakedAmount, 10);
+
+        assertEq(userInfo.stakedAmount, 60);
         assertEq(userInfo.lastStakeTimestamp, currentTimestamp);
-        assertEq(userInfo.claimedRewards, 0);
-        emit log_named_uint("unlockTimestamp", userInfo.unlockTimestamp);
-        emit log_uint(currentTimestamp + vesting.vestingDurations(1));
-        assertEq(userInfo.unlockTimestamp, currentTimestamp + vesting.vestingDurations(1));
+        assertEq(userInfo.vestingDurationIndex, 1);
+        assertEq(fhodl.balanceOf(user), 0);
+    }
+
+    function testCannotVestWithLowerIndex() public {
+        fhodl.mint(user, 20);
+        vm.startPrank(user);
+        fhodl.approve(address(vesting), 20);
+        vesting.vest(10, 1);
+        vm.expectRevert("Can't stake with lower vesting time");
+        vesting.vest(10, 0);
+        vm.stopPrank();
+    }
+
+    function testVestWithHigherIndex() public {
+        fhodl.mint(user, 20);
+        fhodl.transferOwnership(address(vesting));
+        vm.startPrank(user);
+        fhodl.approve(address(vesting), 20);
+        vesting.vest(10, 1);
+        vesting.vest(10, 2);
     }
 }

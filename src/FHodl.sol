@@ -14,7 +14,7 @@ contract FHodl is ERC20, Ownable{
         _mint(msg.sender, _supply);
     }
 
-    function mint(uint256 _amount, address _to) external onlyOwner {        
+    function mint(address _to, uint256 _amount) external onlyOwner {        
         _mint(_to, _amount);
     }
 }

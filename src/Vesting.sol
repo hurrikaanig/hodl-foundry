@@ -83,7 +83,7 @@ contract Vesting is Ownable{
             collectRewards();
         }
         totalRatio = _amount * tokenRatio[_durationIndex];
-        user.stakedAmount += _amount * tokenRatio[_durationIndex];
+        user.stakedAmount = (getUserRealStakedAmount(msg.sender) + _amount) * tokenRatio[_durationIndex];
         user.rewardDebt = user.stakedAmount * accRewardPerShare / ACC_PRECISION;
         user.vestingDurationIndex = _durationIndex;
         user.lastStakeTimestamp = block.timestamp;
@@ -95,7 +95,7 @@ contract Vesting is Ownable{
 
         UserInfo storage user = stakers[msg.sender];
         require(getUserRealStakedAmount(msg.sender) >= _amount, "Not enough staked");
-        require(block.timestamp <= user.lastStakeTimestamp + vestingDurations[user.vestingDurationIndex]);
+        require(block.timestamp >= user.lastStakeTimestamp + vestingDurations[user.vestingDurationIndex], "Tokens not unlocked yet");
         collectRewards();
 
         user.stakedAmount -= _amount * tokenRatio[user.vestingDurationIndex];

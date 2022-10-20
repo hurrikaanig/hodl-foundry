@@ -15,7 +15,7 @@ contract VestingWithoutRewardsTest is Test {
 
     function setUp() public {
         fhodl = new FHodl(1000 ether);
-        vesting = new Vesting(IERC20(address(fhodl)));
+        vesting = new Vesting(IERC20(address(fhodl)), 0, 0);
     }
 
     function testVest() public {
@@ -23,13 +23,12 @@ contract VestingWithoutRewardsTest is Test {
 
         vm.startPrank(user);
         fhodl.approve(address(vesting), 10);
-        uint256 currentTimestamp = block.timestamp;
-        vesting.vest(10, 1);
+        vesting.vest(10, 1, address(0));
         vm.stopPrank();
         Vesting.UserInfo memory userInfo = vesting.getStaker(user);
 
         assertEq(userInfo.stakedAmount, 60);
-        assertEq(userInfo.lastStakeTimestamp, currentTimestamp);
+        assertEq(userInfo.lastStakeTimestamp, block.timestamp);
         assertEq(userInfo.vestingDurationIndex, 1);
         assertEq(fhodl.balanceOf(user), 0);
     }
@@ -38,9 +37,9 @@ contract VestingWithoutRewardsTest is Test {
         fhodl.mint(user, 20);
         vm.startPrank(user);
         fhodl.approve(address(vesting), 20);
-        vesting.vest(10, 1);
+        vesting.vest(10, 1, address(0));
         vm.expectRevert("Can't stake with lower vesting time");
-        vesting.vest(10, 0);
+        vesting.vest(10, 0, address(0));
         vm.stopPrank();
     }
 
@@ -49,8 +48,8 @@ contract VestingWithoutRewardsTest is Test {
         fhodl.transferOwnership(address(vesting));
         vm.startPrank(user);
         fhodl.approve(address(vesting), 20);
-        vesting.vest(10, 1);
-        vesting.vest(10, 2);
+        vesting.vest(10, 1, address(0));
+        vesting.vest(10, 2, address(0));
         Vesting.UserInfo memory userInfo = vesting.getStaker(user);
 
         assertEq(userInfo.stakedAmount, 1000);
@@ -63,7 +62,7 @@ contract VestingWithoutRewardsTest is Test {
         fhodl.transferOwnership(address(vesting));
         vm.startPrank(user);
         fhodl.approve(address(vesting), 20);
-        vesting.vest(10, 1);
+        vesting.vest(10, 1, address(0));
         vm.expectRevert("Tokens not unlocked yet");
         vesting.unvest(10);
         vm.stopPrank();
@@ -74,8 +73,7 @@ contract VestingWithoutRewardsTest is Test {
         fhodl.transferOwnership(address(vesting));
         vm.startPrank(user);
         fhodl.approve(address(vesting), 20);
-        vesting.vest(10, 1);
-        uint256 currentTimestamp = block.timestamp;
+        vesting.vest(10, 1, address(0));
         Vesting.UserInfo memory userInfo = vesting.getStaker(user);
         vm.warp(userInfo.lastStakeTimestamp + vesting.vestingDurations(userInfo.vestingDurationIndex));
         assertEq(fhodl.balanceOf(user), 0);
@@ -89,8 +87,7 @@ contract VestingWithoutRewardsTest is Test {
         fhodl.transferOwnership(address(vesting));
         vm.startPrank(user);
         fhodl.approve(address(vesting), 20);
-        vesting.vest(10, 1);
-        uint256 currentTimestamp = block.timestamp;
+        vesting.vest(10, 1, address(0));
         Vesting.UserInfo memory userInfo = vesting.getStaker(user);
         vm.warp(userInfo.lastStakeTimestamp + vesting.vestingDurations(userInfo.vestingDurationIndex));
         vm.expectRevert("Not enough staked");
@@ -103,8 +100,7 @@ contract VestingWithoutRewardsTest is Test {
         fhodl.transferOwnership(address(vesting));
         vm.startPrank(user);
         fhodl.approve(address(vesting), 20);
-        vesting.vest(10, 1);
-        uint256 currentTimestamp = block.timestamp;
+        vesting.vest(10, 1, address(0));
         Vesting.UserInfo memory userInfo = vesting.getStaker(user);
         vm.warp(userInfo.lastStakeTimestamp + vesting.vestingDurations(userInfo.vestingDurationIndex));
         vesting.unvest(4);

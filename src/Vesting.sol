@@ -38,10 +38,10 @@ contract Vesting is Ownable, ReentrancyGuard{
         1000
     ];
     uint256 totalRatio; // sum of every tokenRatio
-    uint256 lastRewardTimestamp; //
+    uint256 lastRewardTimestamp;
     uint256 accRewardPerShare;
     uint256 rewardPerSec;
-    uint256 referralRatio;
+    uint256 referralRatio; // bonus ratio to the referral address in BPD
     uint256 TotalToCollect = 1000 ether;
     IERC20 public token;
     
@@ -137,11 +137,5 @@ contract Vesting is Ownable, ReentrancyGuard{
         require(_referralRatio <= 5000, "ratio too high");
         require(_referralRatio >= 0, "ratio too low");
         referralRatio = _referralRatio;
-    }
-
-    function setReferredRatio(uint256 _referredRatio) external onlyOwner {
-        require(_referredRatio <= 2000, "ratio too high");
-        require(_referredRatio >= 0, "ratio too low");
-        referralRatio = _referredRatio;
     }
 }
